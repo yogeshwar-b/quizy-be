@@ -1,20 +1,17 @@
-import Bun from 'bun'
 import mongoose from 'mongoose'
-import { mongourl } from './config'
+import { PORT, mongourl } from './config'
+import express from 'express'
+import hostrouter from './routes/hostroutes'
 
-const server = Bun.serve({
-  port: 3000,
-  fetch (req) {
-    const url = new URL(req.url)
-    if (url.pathname === '/') return new Response('Welcome to Quizy!')
-    if (url.pathname === '/test') {
-      return new Response('This is test', { status: 200 })
-    }
-    return new Response('Request not found!', { status: 404 })
-  }
+const app = express()
+app.listen(PORT, () => {
+  console.log(`App is running at ${PORT}`)
 })
-
-console.log(`Listening on http://localhost:${server.port} ...`)
+app.get('/', (request, response) => {
+  console.log(request)
+  return response.status(234).send('Welcome to Quizy!')
+})
+app.use('/quizhost', hostrouter)
 
 mongoose
   .connect(mongourl)
