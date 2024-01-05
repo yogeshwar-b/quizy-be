@@ -8,7 +8,7 @@ hostrouter.get('/test', (request, response) => {
   return response.status(200).send('This is a test!')
 })
 /**
- * Route to view all questions
+ * Get all questions
  */
 hostrouter.get('/viewquestions', async (request, response) => {
   try {
@@ -21,8 +21,46 @@ hostrouter.get('/viewquestions', async (request, response) => {
   }
 })
 
+/**
+ * Get question by id
+ */
+hostrouter.get('/viewquestion/:qid', async (request, response) => {
+  try {
+    const { qid } = request.params
+    // executes, name LIKE john and only selecting the "name" and "friends" fields
+    // await MyModel.find({ name: /john/i }, 'name friends').exec();
+    const question = await QuestionModel.find({ questionid: qid })
+    return response.status(200).send(question)
+  } catch (error) {
+    console.log(`error ${error}`)
+    response.status(500).send({ message: error.message })
+  }
+})
+
+/**
+ * Delete question by id
+ */
+hostrouter.delete('/deletequestion/:qid', async (request, response) => {
+  try {
+    const { qid } = request.params
+    const deletecount = await QuestionModel.deleteOne({ questionid: qid })
+    if (deletecount.deletedCount > 0) {
+      return response.status(200).send('Delete success')
+    }
+    return response.status(201).send('Something went wrong')
+  } catch (error) {
+    console.log(`error ${error}`)
+    response.status(500).send({ message: error.message })
+  }
+})
+
+/**
+ * Route for all the other requests
+ */
 hostrouter.get('*', (request, response) => {
-  return response.status(404).send('Your are looking at wrong place , nothing is here')
+  return response
+    .status(404)
+    .send('Your are looking at wrong place , nothing is here')
 })
 
 /**
@@ -30,9 +68,11 @@ hostrouter.get('*', (request, response) => {
  */
 hostrouter.post('/savequestion', async (request, response) => {
   try {
-    if (!request.body.questiontxt ||
+    if (
+      !request.body.questiontxt ||
       !request.body.questionid ||
-      !request.body.choices) {
+      !request.body.choices
+    ) {
       return response.status(400).send({
         message: 'Request missing fields'
       })

@@ -11,7 +11,11 @@ const questionSchema = mongoose.Schema({
   }],
   answer: {
     type: Number
+  },
+  sessionid: {
+    type: String
   }
 })
+questionSchema.index({ questionid: 1, sessionid: 1 }, { unique: true })
 
 export const QuestionModel = mongoose.model('Question', questionSchema)
