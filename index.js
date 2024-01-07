@@ -2,15 +2,25 @@ import mongoose from 'mongoose'
 import { PORT, mongourl } from './config'
 import express from 'express'
 import hostrouter from './routes/hostroutes'
+import cors from 'cors'
 
 const app = express()
+
+//CORS policy
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'DELETE'],
+    allowedHeader: ['Content-Type'],
+  })
+)
+
 app.use(express.json())
 
 app.listen(PORT, () => {
   console.log(`App is running at ${PORT}`)
 })
 app.get('/', (request, response) => {
-  // console.log(request)
   return response.status(234).send('Welcome to Quizy!')
 })
 app.use('/quizhost', hostrouter)

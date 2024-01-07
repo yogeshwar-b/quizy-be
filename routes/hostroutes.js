@@ -4,7 +4,6 @@ import { QuestionModel } from '../models/mongoosemodels/questions'
 const hostrouter = express.Router()
 
 hostrouter.get('/test', (request, response) => {
-  // console.log(request)
   return response.status(200).send('This is a test!')
 })
 /**
@@ -13,7 +12,6 @@ hostrouter.get('/test', (request, response) => {
 hostrouter.get('/viewquestions', async (request, response) => {
   try {
     const questions = await QuestionModel.find({})
-    // console.log(questions)
     return response.status(200).json(questions)
   } catch (error) {
     console.log(`error ${error}`)
@@ -27,8 +25,6 @@ hostrouter.get('/viewquestions', async (request, response) => {
 hostrouter.get('/viewquestion/:qid', async (request, response) => {
   try {
     const { qid } = request.params
-    // executes, name LIKE john and only selecting the "name" and "friends" fields
-    // await MyModel.find({ name: /john/i }, 'name friends').exec();
     const question = await QuestionModel.find({ questionid: qid })
     return response.status(200).send(question)
   } catch (error) {
@@ -43,8 +39,8 @@ hostrouter.get('/viewquestion/:qid', async (request, response) => {
 hostrouter.delete('/deletequestion/:qid', async (request, response) => {
   try {
     const { qid } = request.params
-    const deletecount = await QuestionModel.deleteOne({ questionid: qid })
-    if (deletecount.deletedCount > 0) {
+    const deleteResponse = await QuestionModel.deleteOne({ questionid: qid })
+    if (deleteResponse.deletedCount > 0) {
       return response.status(200).send('Delete success')
     }
     return response.status(201).send('Something went wrong')
@@ -86,7 +82,8 @@ hostrouter.post('/savequestion', async (request, response) => {
       questiontxt: request.body.questiontxt,
       questionid: request.body.questionid,
       choices: request.body.choices,
-      answer: request.body.answer
+      answer: request.body.answer,
+      sessionid: request.body.sessionid
     })
     return response.status(201).send(q)
   } catch (error) {
