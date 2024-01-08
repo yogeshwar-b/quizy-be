@@ -70,12 +70,12 @@ hostrouter.post('/savequestion', async (request, response) => {
       !request.body.choices
     ) {
       return response.status(400).send({
-        message: 'Request missing fields'
+        message: 'Request missing fields',
       })
     }
     if (request.body.answer >= request.body.choices.length) {
       return response.status(400).send({
-        message: 'Answer should be within choices length'
+        message: 'Answer should be within choices length',
       })
     }
     const q = await QuestionModel.create({
@@ -83,9 +83,11 @@ hostrouter.post('/savequestion', async (request, response) => {
       questionid: request.body.questionid,
       choices: request.body.choices,
       answer: request.body.answer,
-      sessionid: request.body.sessionid
+      sessionid: request.body.sessionid,
     })
-    return response.status(201).send(q)
+    return response
+      .status(201)
+      .send(JSON.stringify({ message: 'Added Successfully' }))
   } catch (error) {
     console.log(`error ${error}`)
     response.status(500).send({ message: error.message })

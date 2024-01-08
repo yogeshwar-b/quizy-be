@@ -3,13 +3,14 @@ import { PORT, mongourl } from './config'
 import express from 'express'
 import hostrouter from './routes/hostroutes'
 import cors from 'cors'
+import { frontendurl } from './config'
 
 const app = express()
 
 //CORS policy
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: frontendurl,
     methods: ['GET', 'POST', 'DELETE'],
     allowedHeader: ['Content-Type'],
   })
