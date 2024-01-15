@@ -38,6 +38,22 @@ hostrouter.get('/viewquestion/:qid', async (request, response) => {
     response.status(500).send({ message: error.message })
   }
 })
+/**
+ * Get question by SessionId
+ */
+hostrouter.get(
+  '/viewquestionbysession/:sessionid',
+  async (request, response) => {
+    try {
+      const { sessionid } = request.params
+      const question = await QuestionModel.find({ sessionid: sessionid })
+      return response.status(200).send(question)
+    } catch (error) {
+      console.log(`error ${error}`)
+      response.status(500).send({ message: error.message })
+    }
+  }
+)
 
 /**
  * Delete question by id
