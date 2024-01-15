@@ -39,11 +39,12 @@ io.on('connection', (socket) => {
     socket.to(arg.room).emit('hello', 'someone sent ' + JSON.stringify(arg.msg))
   })
   socket.on('join', (arg, callback) => {
-    console.log(arg) // "world"
+    console.log('join', arg) // "world"
     //Join room named arg
     socket.join(arg)
-    socket.emit('hello', `you are in ${arg}`)
-    // callback('got it')
+    var response = { msg: 'JoinSuccess' }
+    // socket.emit('JoinedRoom', `you are in ${arg}`)
+    callback(response)
   })
   console.log('a user connected')
 })
