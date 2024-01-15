@@ -1,11 +1,17 @@
 import express from 'express'
 import { QuestionModel } from '../models/mongoosemodels/questions'
+import crypto from 'crypto'
 
 const hostrouter = express.Router()
 
 hostrouter.get('/test', (request, response) => {
   return response.status(200).send('This is a test!')
 })
+
+function hash(string) {
+  return crypto.createHash('sha256').update(string).digest('hex')
+}
+
 /**
  * Get all questions
  */
@@ -64,26 +70,24 @@ hostrouter.get('*', (request, response) => {
  */
 hostrouter.post('/savequestion', async (request, response) => {
   try {
-    if (
-      !request.body.questiontxt ||
-      !request.body.questionid ||
-      !request.body.choices
-    ) {
+    if (!request.body.questiontxt || !request.body.choices) {
       return response.status(400).send({
-        message: 'Request missing fields',
+        message: 'Request missing fields'
       })
     }
     if (request.body.answer >= request.body.choices.length) {
       return response.status(400).send({
-        message: 'Answer should be within choices length',
+        message: 'Answer should be within choices length'
       })
     }
+
+    const questionID = hash(request.body.questiontxt).substring(0, 32)
     const q = await QuestionModel.create({
       questiontxt: request.body.questiontxt,
-      questionid: request.body.questionid,
+      questionid: questionID,
       choices: request.body.choices,
       answer: request.body.answer,
-      sessionid: request.body.sessionid,
+      sessionid: request.body.sessionid
     })
     return response
       .status(201)
