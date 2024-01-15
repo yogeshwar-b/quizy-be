@@ -38,13 +38,22 @@ io.on('connection', (socket) => {
     // console.log(arg, arg.room, arg.msg)
     socket.to(arg.room).emit('hello', 'someone sent ' + JSON.stringify(arg.msg))
   })
+
   socket.on('join', (arg, callback) => {
-    console.log('join', arg) // "world"
-    //Join room named arg
-    socket.join(arg)
-    var response = { msg: 'JoinSuccess' }
-    // socket.emit('JoinedRoom', `you are in ${arg}`)
-    callback(response)
+    if (arg.type == 'create') {
+      // console.log('join', arg)
+      //Join room named arg
+      socket.join(arg.roomname)
+      callback({ msg: 'CreateSuccess' })
+    } else {
+      //check if room is available for 'Join' type
+      if (io.sockets.adapter.rooms.has(arg.roomname)) {
+        socket.join('join', arg.roomname)
+        callback({ msg: 'JoinSuccess' })
+      } else {
+        callback({ msg: 'RoomDoesNotExist' })
+      }
+    }
   })
   console.log('a user connected')
 })
