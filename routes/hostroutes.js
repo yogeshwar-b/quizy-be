@@ -8,8 +8,8 @@ hostrouter.get('/test', (request, response) => {
   return response.status(200).send('This is a test!')
 })
 
-function hash(string) {
-  return crypto.createHash('sha256').update(string).digest('hex')
+function hash(txt) {
+  return crypto.createHash('sha256').update(txt).digest('hex')
 }
 
 /**
@@ -31,7 +31,7 @@ hostrouter.get('/viewquestions', async (request, response) => {
 hostrouter.get('/viewquestion/:qid', async (request, response) => {
   try {
     const { qid } = request.params
-    const question = await QuestionModel.find({ questionid: qid })
+    const question = await QuestionModel.findOne({ questionid: qid })
     return response.status(200).send(question)
   } catch (error) {
     console.log(`error ${error}`)
@@ -58,10 +58,13 @@ hostrouter.get(
 /**
  * Delete question by id
  */
-hostrouter.delete('/deletequestion/:qid', async (request, response) => {
+hostrouter.delete('/deletequestion/:qid/:sid', async (request, response) => {
   try {
-    const { qid } = request.params
-    const deleteResponse = await QuestionModel.deleteOne({ questionid: qid })
+    const { qid, sid } = request.params
+    const deleteResponse = await QuestionModel.deleteOne({
+      questionid: qid,
+      sessionid: sid
+    })
     if (deleteResponse.deletedCount > 0) {
       return response.status(200).send('Delete success')
     }
@@ -108,6 +111,50 @@ hostrouter.post('/savequestion', async (request, response) => {
     return response
       .status(201)
       .send(JSON.stringify({ message: 'Added Successfully' }))
+  } catch (error) {
+    console.log(`error ${error}`)
+    response.status(500).send({ message: error.message })
+  }
+})
+
+/**
+ * @todo - check if the update was successful
+ * Route to Edit a question , This needs old QuestionId and new QuestionBody request
+ */
+hostrouter.put('/editquestion', async (request, response) => {
+  try {
+    if (!request.body.questiontxt || !request.body.choices) {
+      return response.status(400).send({
+        message: 'Request missing fields'
+      })
+    }
+    if (request.body.answer >= request.body.choices.length) {
+      return response.status(400).send({
+        message: 'Answer should be within choices length'
+      })
+    }
+    const oldQuestionId = request.body.oldquestionid
+
+    const question = await QuestionModel.findOneAndUpdate(
+      {
+        questionid: oldQuestionId,
+        sessionid: request.body.sessionid
+      },
+      {
+        questiontxt: request.body.questiontxt,
+        questionid: hash(request.body.questiontxt).substring(0, 32),
+        choices: request.body.choices,
+        answer: request.body.answer,
+        sessionid: request.body.sessionid
+      },
+      {
+        returnOriginal: false
+      }
+    )
+    // console.log(question)
+    return response
+      .status(200)
+      .send(JSON.stringify({ message: 'Updated Successfully' }))
   } catch (error) {
     console.log(`error ${error}`)
     response.status(500).send({ message: error.message })
