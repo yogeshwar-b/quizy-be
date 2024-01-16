@@ -1,9 +1,8 @@
 import mongoose from 'mongoose'
-import { PORT, mongourl } from './config'
-import express, { json } from 'express'
+import { PORT, mongourl, frontendurl } from './config'
+import express from 'express'
 import hostrouter from './routes/hostroutes'
 import cors from 'cors'
-import { frontendurl } from './config'
 import http from 'http'
 import { Server } from 'socket.io'
 
@@ -12,7 +11,7 @@ app.use(express.json())
 
 const server = http.createServer(app)
 
-//CORS policy
+// CORS policy
 app.use(
   cors({
     origin: frontendurl,
@@ -32,6 +31,9 @@ app.get('/', (request, response) => {
 
 app.use('/quizhost', hostrouter)
 
+/**
+ * @todo - rooms available needs to be sent to client for temporary logging for development.
+ */
 io.on('connection', (socket) => {
   socket.on('hello', (arg, callback) => {
     console.log('inside hello')
@@ -40,18 +42,28 @@ io.on('connection', (socket) => {
   })
 
   socket.on('join', (arg, callback) => {
-    if (arg.type == 'create') {
+    if (arg.type === 'create') {
       // console.log('join', arg)
-      //Join room named arg
+      // Join room named arg
       socket.join(arg.roomname)
-      callback({ msg: 'CreateSuccess' })
+      callback({
+        msg: 'CreateSuccess',
+        rooomsavailable: Object.keys(io.sockets.adapter.rooms)
+      })
     } else {
-      //check if room is available for 'Join' type
-      if (io.sockets.adapter.rooms.has(arg.roomname)) {
+      // check if room is available for 'Join' type
+      const skiproomchek = true
+      if (skiproomchek || io.sockets.adapter.rooms.has(arg.roomname)) {
         socket.join('join', arg.roomname)
-        callback({ msg: 'JoinSuccess' })
+        callback({
+          msg: 'JoinSuccess',
+          rooomsavailable: Object.keys(io.sockets.adapter.rooms)
+        })
       } else {
-        callback({ msg: 'RoomDoesNotExist' })
+        callback({
+          msg: 'RoomDoesNotExist',
+          rooomsavailable: Object.keys(io.sockets.adapter.rooms)
+        })
       }
     }
   })
