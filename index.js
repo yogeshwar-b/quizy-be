@@ -5,11 +5,12 @@ import hostrouter from './routes/hostroutes'
 import cors from 'cors'
 import http from 'http'
 import { Server } from 'socket.io'
+import { roomModel } from './models/mongoosemodels/rooms'
 
 const app = express()
 app.use(express.json())
 
-const server = http.createServer(app)
+export const _httpserver = http.createServer(app)
 
 // CORS policy
 app.use(
@@ -19,17 +20,12 @@ app.use(
     allowedHeader: ['Content-Type']
   })
 )
-const io = new Server(server, {
+
+const io = new Server(_httpserver, {
   cors: {
     origin: frontendurl
   }
 })
-
-app.get('/', (request, response) => {
-  return response.status(234).send('Welcome to Quizy!')
-})
-
-app.use('/quizhost', hostrouter)
 
 /**
  * @todo - rooms available needs to be sent to client for temporary logging for development.
@@ -67,10 +63,77 @@ io.on('connection', (socket) => {
       }
     }
   })
+
+  socket.on('createroom', async (arg, callback) => {
+    try {
+      console.log('create room called')
+      socket.join(arg.roomname)
+      let skip = false
+      var findobj = await roomModel
+        .findOne({ roomname: arg.roomname })
+        .then((x) => {
+          skip = true
+        })
+      if (!skip) {
+        const roomdb = await roomModel.create({
+          roomname: arg.roomname,
+          expiry: Date.now()
+        })
+        callback({
+          msg: 'CreateSuccess'
+        })
+      } else {
+        callback({
+          msg: 'CreateFailed'
+        })
+      }
+    } catch (error) {
+      console.log(error)
+      callback({
+        msg: 'Error'
+      })
+    }
+  })
+
+  socket.on('joinroom', async (arg, callback) => {
+    try {
+      console.log('join room called')
+      socket.join(arg.roomname)
+      let skip = true
+      var findobj = await roomModel
+        .findOne({ roomname: arg.roomname })
+        .then((x) => {
+          // console.log(x)
+          if (x !== null) {
+            skip = false
+          }
+        })
+      if (!skip) {
+        callback({
+          msg: 'JoinSuccess'
+        })
+      } else {
+        callback({
+          msg: 'JoinFailed'
+        })
+      }
+    } catch (error) {
+      console.log(error)
+      callback({
+        msg: 'Error'
+      })
+    }
+  })
   console.log('a user connected')
 })
 
-server.listen(PORT, () => {
+app.get('/', (request, response) => {
+  return response.status(234).send('Welcome to Quizy!')
+})
+
+app.use('/quizhost', hostrouter)
+
+_httpserver.listen(PORT, () => {
   console.log(`App is running at ${PORT}`)
 })
 
