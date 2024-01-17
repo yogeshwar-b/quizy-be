@@ -8,7 +8,7 @@ hostrouter.get('/test', (request, response) => {
   return response.status(200).send('This is a test!')
 })
 
-function hash (txt) {
+function hash(txt) {
   return crypto.createHash('sha256').update(txt).digest('hex')
 }
 
@@ -39,41 +39,41 @@ hostrouter.get('/viewquestion/:qid', async (request, response) => {
   }
 })
 /**
- * Get question by SessionId
+ * Get question by roomname
  */
-hostrouter.get(
-  '/viewquestionbysession/:sessionid',
+hostrouter.get('/viewquestionbyroom/:roomname', async (request, response) => {
+  try {
+    const { roomname } = request.params
+    const question = await QuestionModel.find({ roomname })
+    return response.status(200).send(question)
+  } catch (error) {
+    console.log(`error ${error}`)
+    response.status(500).send({ message: error.message })
+  }
+})
+
+/**
+ * Delete question by id
+ */
+hostrouter.delete(
+  '/deletequestion/:qid/:roomname',
   async (request, response) => {
     try {
-      const { sessionid } = request.params
-      const question = await QuestionModel.find({ sessionid:  sessionid })
-      return response.status(200).send(question)
+      const { qid, roomname } = request.params
+      const deleteResponse = await QuestionModel.deleteOne({
+        questionid: qid,
+        roomname: roomname
+      })
+      if (deleteResponse.deletedCount > 0) {
+        return response.status(200).send({ message: 'Delete success' })
+      }
+      return response.status(404).send({ message: 'item not found' })
     } catch (error) {
       console.log(`error ${error}`)
       response.status(500).send({ message: error.message })
     }
   }
 )
-
-/**
- * Delete question by id
- */
-hostrouter.delete('/deletequestion/:qid/:sid', async (request, response) => {
-  try {
-    const { qid, sid } = request.params
-    const deleteResponse = await QuestionModel.deleteOne({
-      questionid: qid,
-      sessionid: sid
-    })
-    if (deleteResponse.deletedCount > 0) {
-      return response.status(200).send({ message:'Delete success' })
-    }
-    return response.status(404).send({ message:'item not found' })
-  } catch (error) {
-    console.log(`error ${error}`)
-    response.status(500).send({ message: error.message })
-  }
-})
 
 /**
  * Route for all the other requests
@@ -106,7 +106,7 @@ hostrouter.post('/savequestion', async (request, response) => {
       questionid: questionID,
       choices: request.body.choices,
       answer: request.body.answer,
-      sessionid: request.body.sessionid
+      roomname: request.body.roomname
     })
     return response
       .status(201)
@@ -133,20 +133,19 @@ hostrouter.put('/editquestion', async (request, response) => {
         message: 'Answer should be within choices length'
       })
     }
-    const oldQuestionId = request.body.questionid
 
     const question = await QuestionModel.findOneAndUpdate(
       {
         // oldquestionid
         questionid: request.body.questionid,
-        sessionid: request.body.sessionid
+        roomname: request.body.roomname
       },
       {
         questiontxt: request.body.questiontxt,
         questionid: hash(request.body.questiontxt).substring(0, 32),
         choices: request.body.choices,
         answer: request.body.answer,
-        sessionid: request.body.sessionid
+        roomname: request.body.roomname
       },
       {
         returnOriginal: false
@@ -154,13 +153,18 @@ hostrouter.put('/editquestion', async (request, response) => {
     )
     // console.log(question)
     if (question === null) {
-      return response
-        .status(404)
-        .send(JSON.stringify({ message: 'Updated Failed,did not find the specified question.' }))
+      return response.status(404).send(
+        JSON.stringify({
+          message: 'Updated Failed,did not find the specified question.'
+        })
+      )
     }
-    return response
-      .status(200)
-      .send(JSON.stringify({ message: 'Updated Successfully', newQuestionid: question.questionid }))
+    return response.status(200).send(
+      JSON.stringify({
+        message: 'Updated Successfully',
+        newQuestionid: question.questionid
+      })
+    )
   } catch (error) {
     console.log(`error ${error}`)
     response.status(500).send({ message: error.message })
