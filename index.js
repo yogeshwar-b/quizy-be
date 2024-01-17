@@ -15,7 +15,7 @@ const server = http.createServer(app)
 app.use(
   cors({
     origin: frontendurl,
-    methods: ['GET', 'POST', 'DELETE'],
+    methods: ['GET', 'POST', 'DELETE', 'PUT'],
     allowedHeader: ['Content-Type']
   })
 )

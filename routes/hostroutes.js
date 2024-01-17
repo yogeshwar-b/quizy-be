@@ -8,7 +8,7 @@ hostrouter.get('/test', (request, response) => {
   return response.status(200).send('This is a test!')
 })
 
-function hash(txt) {
+function hash (txt) {
   return crypto.createHash('sha256').update(txt).digest('hex')
 }
 
@@ -46,7 +46,7 @@ hostrouter.get(
   async (request, response) => {
     try {
       const { sessionid } = request.params
-      const question = await QuestionModel.find({ sessionid: sessionid })
+      const question = await QuestionModel.find({ sessionid:  sessionid })
       return response.status(200).send(question)
     } catch (error) {
       console.log(`error ${error}`)
@@ -66,9 +66,9 @@ hostrouter.delete('/deletequestion/:qid/:sid', async (request, response) => {
       sessionid: sid
     })
     if (deleteResponse.deletedCount > 0) {
-      return response.status(200).send('Delete success')
+      return response.status(200).send({ message:'Delete success' })
     }
-    return response.status(201).send('Something went wrong')
+    return response.status(404).send({ message:'item not found' })
   } catch (error) {
     console.log(`error ${error}`)
     response.status(500).send({ message: error.message })
@@ -133,11 +133,12 @@ hostrouter.put('/editquestion', async (request, response) => {
         message: 'Answer should be within choices length'
       })
     }
-    const oldQuestionId = request.body.oldquestionid
+    const oldQuestionId = request.body.questionid
 
     const question = await QuestionModel.findOneAndUpdate(
       {
-        questionid: oldQuestionId,
+        // oldquestionid
+        questionid: request.body.questionid,
         sessionid: request.body.sessionid
       },
       {
@@ -152,9 +153,14 @@ hostrouter.put('/editquestion', async (request, response) => {
       }
     )
     // console.log(question)
+    if (question === null) {
+      return response
+        .status(404)
+        .send(JSON.stringify({ message: 'Updated Failed,did not find the specified question.' }))
+    }
     return response
       .status(200)
-      .send(JSON.stringify({ message: 'Updated Successfully' }))
+      .send(JSON.stringify({ message: 'Updated Successfully', newQuestionid: question.questionid }))
   } catch (error) {
     console.log(`error ${error}`)
     response.status(500).send({ message: error.message })
