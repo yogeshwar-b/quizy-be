@@ -66,15 +66,18 @@ io.on('connection', (socket) => {
 
   socket.on('createroom', async (arg, callback) => {
     try {
-      console.log('create room called')
-      socket.join(arg.roomname)
+      console.log('create room called with roomname- ' + arg.roomname)
       let skip = false
       var findobj = await roomModel
         .findOne({ roomname: arg.roomname })
         .then((x) => {
-          skip = true
+          // console.log(x)
+          if (x !== null) {
+            skip = true
+          }
         })
       if (!skip) {
+        socket.join(arg.roomname)
         const roomdb = await roomModel.create({
           roomname: arg.roomname,
           expiry: Date.now()
