@@ -21,7 +21,7 @@ app.use(
   })
 )
 
-const io = new Server(_httpserver, {
+export const io = new Server(_httpserver, {
   cors: {
     origin: frontendurl
   }

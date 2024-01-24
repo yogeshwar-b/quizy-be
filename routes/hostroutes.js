@@ -1,6 +1,7 @@
 import express from 'express'
 import { QuestionModel } from '../models/mongoosemodels/questions'
 import crypto from 'crypto'
+import { io } from '..'
 
 const hostrouter = express.Router()
 
@@ -67,6 +68,33 @@ hostrouter.delete(
       if (deleteResponse.deletedCount > 0) {
         return response.status(200).send({ message: 'Delete success' })
       }
+      return response.status(404).send({ message: 'item not found' })
+    } catch (error) {
+      console.log(`error ${error}`)
+      response.status(500).send({ message: error.message })
+    }
+  }
+)
+
+/**
+ * Send question to playerroom
+ */
+hostrouter.get(
+  '/sendquestion/:roomname/:questionnumber',
+  async (request, response) => {
+    try {
+      const { roomname, questionnumber } = request.params
+      const question = await QuestionModel.findOne({
+        QuestionNumber: Number(questionnumber),
+        roomname: roomname
+      })
+
+      if (question !== null) {
+        io.in(roomname).emit('receivednextquestion', question)
+
+        return response.status(200).send({ message: 'Success' })
+      }
+
       return response.status(404).send({ message: 'item not found' })
     } catch (error) {
       console.log(`error ${error}`)
