@@ -37,12 +37,12 @@ io.on('connection', (socket) => {
     socket.to(arg.room).emit('hello', 'someone sent ' + JSON.stringify(arg.msg))
   })
 
-  socket.on('join', (arg, callback) => {
+  socket.on('join', (arg, respcallback) => {
     if (arg.type === 'create') {
       // console.log('join', arg)
       // Join room named arg
       socket.join(arg.roomname)
-      callback({
+      respcallback({
         msg: 'CreateSuccess',
         rooomsavailable: Object.keys(io.sockets.adapter.rooms)
       })
@@ -51,12 +51,12 @@ io.on('connection', (socket) => {
       const skiproomchek = true
       if (skiproomchek || io.sockets.adapter.rooms.has(arg.roomname)) {
         socket.join('join', arg.roomname)
-        callback({
+        respcallback({
           msg: 'JoinSuccess',
           rooomsavailable: Object.keys(io.sockets.adapter.rooms)
         })
       } else {
-        callback({
+        respcallback({
           msg: 'RoomDoesNotExist',
           rooomsavailable: Object.keys(io.sockets.adapter.rooms)
         })
@@ -64,68 +64,84 @@ io.on('connection', (socket) => {
     }
   })
 
-  socket.on('createroom', async (arg, callback) => {
-    try {
-      console.log('create room called with roomname- ' + arg.roomname)
-      let skip = false
-      var findobj = await roomModel
-        .findOne({ roomname: arg.roomname })
-        .then((x) => {
-          // console.log(x)
-          if (x !== null) {
-            skip = true
-          }
-        })
-      if (!skip) {
-        socket.join(arg.roomname)
-        const roomdb = await roomModel.create({
-          roomname: arg.roomname,
-          expiry: Date.now()
-        })
-        callback({
-          msg: 'CreateSuccess'
-        })
-      } else {
-        callback({
-          msg: 'CreateFailed'
-        })
-      }
-    } catch (error) {
-      console.log(error)
-      callback({
-        msg: 'Error'
+  socket.on('createroom', async (arg, respcallback) => {
+    console.log('create room called' + arg)
+    await roomModel
+      .findOne({ roomname: arg.roomname })
+      .then(async (x) => {
+        if (x == null) {
+          socket.join(arg.roomname)
+          await roomModel
+            .create({
+              roomname: arg.roomname,
+              roomsecret: arg.roomsecret,
+              expiry: Date.now()
+            })
+            .then(
+              respcallback({
+                msg: 'CreateSuccess'
+              })
+            )
+        } else {
+          respcallback({
+            msg: 'CreateFailed'
+          })
+        }
       })
-    }
+      .catch((err) => {
+        console.log(err)
+        respcallback({
+          msg: 'Error'
+        })
+      })
   })
 
-  socket.on('joinroom', async (arg, callback) => {
-    try {
-      console.log('join room called')
-      socket.join(arg.roomname)
-      let skip = true
-      var findobj = await roomModel
-        .findOne({ roomname: arg.roomname })
-        .then((x) => {
-          // console.log(x)
-          if (x !== null) {
-            skip = false
-          }
-        })
-      if (!skip) {
-        callback({
-          msg: 'JoinSuccess'
-        })
-      } else {
-        callback({
-          msg: 'JoinFailed'
-        })
-      }
-    } catch (error) {
-      console.log(error)
-      callback({
-        msg: 'Error'
+  socket.on('manageroom', async (arg, respcallback) => {
+    console.log('manage room called', arg)
+    await roomModel
+      .findOne({ roomname: arg.roomname, roomsecret: arg.roomsecret })
+      .then((x) => {
+        if (x !== null) {
+          socket.join(arg.roomname)
+          respcallback({
+            msg: 'JoinSuccess'
+          })
+        } else {
+          respcallback({
+            msg: 'JoinFailed'
+          })
+        }
       })
-    }
+      .catch((error) => {
+        console.log(error)
+        respcallback({
+          msg: 'Error'
+        })
+      })
+  })
+
+  socket.on('joinroom', async (arg, respcallback) => {
+    console.log('join room called', arg)
+    await roomModel
+      .findOne({ roomname: arg.roomname })
+      .then((x) => {
+        if (x !== null) {
+          socket.join(arg.roomname)
+          respcallback({
+            msg: 'JoinSuccess'
+          })
+        } else {
+          respcallback({
+            msg: 'JoinFailed'
+          })
+        }
+      })
+      .catch((error) => {
+        console.log(error)
+        respcallback({
+          msg: 'Error'
+        })
+      })
   })
   console.log('a user connected')
 })
