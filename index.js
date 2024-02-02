@@ -5,6 +5,7 @@ import hostrouter from './routes/hostroutes'
 import cors from 'cors'
 import http from 'http'
 import { Server } from 'socket.io'
+import playerrouter from './routes/playerrouter'
 import { roomModel } from './models/mongoosemodels/rooms'
 
 const app = express()
@@ -151,6 +152,7 @@ app.get('/', (request, response) => {
 })
 
 app.use('/quizhost', hostrouter)
+app.use('/player', playerrouter)
 
 _httpserver.listen(PORT, () => {
   console.log(`App is running at ${PORT}`)

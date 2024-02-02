@@ -76,6 +76,12 @@ hostrouter.delete(
   }
 )
 
+hostrouter.get('/submitchoices/:roomname', async (request, response) => {
+  console.log('emitting submit choices', request.params)
+  const { roomname } = request.params
+  io.to(roomname).emit('submitchoices')
+})
+
 /**
  * Send question to playerroom
  */
@@ -94,7 +100,9 @@ hostrouter.get(
 
         return response.status(200).send({ message: 'Success' })
       }
-
+      if (questionnumber > 0) {
+        return response.status(404).send({ message: 'Limit' })
+      }
       return response.status(404).send({ message: 'item not found' })
     } catch (error) {
       console.log(`error ${error}`)
