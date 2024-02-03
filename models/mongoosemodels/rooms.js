@@ -3,6 +3,9 @@ const roomSchema = mongoose.Schema({
   roomname: {
     type: String
   },
+  roomsecret: {
+    type: String
+  },
   expiry: {
     type: Date
   }
