@@ -16,9 +16,11 @@ const submissionSchema = mongoose.Schema({
   roomname: {
     type: String
   },
-  playersubmissions: {
-    type: playerSubmissionSchema
-  }
+  playersubmissions: [
+    {
+      type: playerSubmissionSchema
+    }
+  ]
 })
 
 submissionSchema.index({ roomname: 1 }, { unique: true })

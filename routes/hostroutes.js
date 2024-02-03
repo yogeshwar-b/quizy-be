@@ -75,11 +75,14 @@ hostrouter.delete(
     }
   }
 )
-
-hostrouter.get('/submitchoices/:roomname', async (request, response) => {
+/**
+ * Submit choices
+ */
+hostrouter.get('/submitchoices/:roomname', (request, response) => {
   console.log('emitting submit choices', request.params)
   const { roomname } = request.params
-  io.to(roomname).emit('submitchoices')
+  io.in(roomname).emit('submitchoices')
+  return response.status(200).send({ message: 'Success' })
 })
 
 /**
