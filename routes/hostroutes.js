@@ -2,6 +2,7 @@ import express from 'express'
 import { QuestionModel } from '../models/mongoosemodels/questions'
 import crypto from 'crypto'
 import { io } from '..'
+import { submissionModel } from '../models/mongoosemodels/submissions'
 
 const hostrouter = express.Router()
 
@@ -83,6 +84,49 @@ hostrouter.get('/submitchoices/:roomname', (request, response) => {
   const { roomname } = request.params
   io.in(roomname).emit('submitchoices')
   return response.status(200).send({ message: 'Success' })
+})
+
+/**
+ * calculate scores
+ */
+hostrouter.get('/calculatescore/:roomname', async (request, response) => {
+  console.log('emitting submit choices', request.params)
+  const { roomname } = request.params
+  const question = await QuestionModel.find({ roomname })
+    .then(async (resp) => {
+      let answerslist = []
+      resp.map((q) => {
+        answerslist.push(q.answer)
+      })
+
+      /**
+       * Get submissions
+       */
+      await submissionModel.findOne({ roomname }).then((resp) => {
+        console.log(answerslist, resp.playersubmissions)
+
+        let scores = []
+        for (let i = 0; i < resp.playersubmissions.length; i++) {
+          scores.push(0)
+          for (let j = 0; j < answerslist.length; j++) {
+            if (
+              j < resp.playersubmissions[i].choices.length &&
+              Number(resp.playersubmissions[i].choices[j]) == answerslist[j]
+            ) {
+              scores[i] += 100
+            }
+          }
+        }
+        console.log('scores', scores)
+        return response.status(200).send({ message: 'Scores calculation done' })
+      })
+    })
+    .catch((error) => {
+      console.log('found errr', error)
+      return response
+        .status(404)
+        .send({ message: 'Error faced in calculation' })
+    })
 })
 
 /**
