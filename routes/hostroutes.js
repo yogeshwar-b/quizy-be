@@ -116,6 +116,11 @@ hostrouter.get('/calculatescore/:roomname', async (request, response) => {
               scores[i] += 100
             }
           }
+          UpdateScores({
+            roomname: resp.roomname,
+            playername: resp.playersubmissions[i].playername,
+            score: scores[i]
+          })
         }
         console.log('scores', scores)
         return response.status(200).send({ message: 'Scores calculation done' })
@@ -128,6 +133,31 @@ hostrouter.get('/calculatescore/:roomname', async (request, response) => {
         .send({ message: 'Error faced in calculation' })
     })
 })
+
+async function UpdateScores({ roomname, playername, score }) {
+  console.log('update for ', roomname, playername, score)
+  await submissionModel
+    .findOneAndUpdate(
+      {
+        roomname: roomname,
+        'playersubmissions.playername': playername
+      },
+      {
+        $set: {
+          'playersubmissions.$.score': score
+        }
+      },
+      { new: true, upsert: true }
+    )
+    .then((resp) => {
+      // console.log('after update', resp)
+      return response.status(200).send({ message: 'Success' })
+    })
+    .catch((error) => {
+      console.log('errrrr', error)
+      return response.status(500)
+    })
+}
 
 /**
  * Send question to playerroom
