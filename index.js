@@ -7,6 +7,7 @@ import http from 'http'
 import { Server } from 'socket.io'
 import playerrouter from './routes/playerrouter'
 import { roomModel } from './models/mongoosemodels/rooms'
+import utilityrouter from './routes/utlityroutes'
 
 const app = express()
 app.use(express.json())
@@ -153,6 +154,7 @@ app.get('/', (request, response) => {
 
 app.use('/quizhost', hostrouter)
 app.use('/player', playerrouter)
+app.use('/utility', utilityrouter)
 
 _httpserver.listen(PORT, () => {
   console.log(`App is running at ${PORT}`)
