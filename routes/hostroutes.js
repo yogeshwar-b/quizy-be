@@ -119,7 +119,8 @@ hostrouter.get('/calculatescore/:roomname', async (request, response) => {
           UpdateScores({
             roomname: resp.roomname,
             playername: resp.playersubmissions[i].playername,
-            score: scores[i]
+            score: scores[i],
+            response: response
           })
         }
         console.log('scores', scores)
@@ -134,7 +135,7 @@ hostrouter.get('/calculatescore/:roomname', async (request, response) => {
     })
 })
 
-async function UpdateScores({ roomname, playername, score }) {
+async function UpdateScores({ roomname, playername, score, response }) {
   console.log('update for ', roomname, playername, score)
   await submissionModel
     .findOneAndUpdate(
